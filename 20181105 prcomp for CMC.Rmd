@@ -1,0 +1,38 @@
+---
+title: "20181105 prcomp for CMC"
+author: "cheungngo"
+date: "November 6, 2018"
+output: word_document
+---
+
+```{r}
+library(readr)
+X20181105 <- read_csv("20181105.csv") # 20181105.csv as an example
+View(X20181105)
+CMC_change = X20181105
+```
+
+### prcomp()
+
+```{r}
+PC_1105 = prcomp(na.omit(CMC_change))
+```
+
+### rotation plot
+
+```{r}
+CN_1105 = rownames(PC_1105$rotation)
+head(CN_1105)
+CN_1105 = as.factor(CN_1105)
+```
+
+```{r}
+plot(PC_1105$rotation[,1:2])
+text(PC_1105$rotation[,1:2], labels = CN_1105, pos = 4, cex = 0.5)
+```
+
+```{r}
+plot(PC_1105$rotation[,1:2], xlim = c(0,0.25), ylim = c(-0.5,0.1))
+text(PC_1105$rotation[,1:2], labels = CN_1105, pos = 4, cex = 0.5, xlim = c(0,0.25), ylim = c(-0.5,0.1))
+```
+
