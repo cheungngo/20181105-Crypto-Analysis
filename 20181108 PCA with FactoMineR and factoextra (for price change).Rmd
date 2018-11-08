@@ -1,0 +1,99 @@
+---
+title: "20181108 PCA with FactoMineR and factoextra (for price change)"
+author: "cheungngo"
+date: "8 November 2018"
+output: word_document
+---
+
+```{r, message=FALSE}
+library(FactoMineR)
+library(factoextra)
+```
+
+### Loading the data
+
+```{r}
+library(readr)
+X20181108_pricechange <- read_csv("20181108-pricechange.csv")
+View(X20181108_pricechange)
+```
+
+### Tidying the dataset
+
+```{r}
+CMC = X20181108_pricechange
+CMC = as.data.frame(CMC) # it became tibble when being read from csv
+rownames(CMC) = sapply(CMC[,1],as.character)
+CMC = CMC[,-1]
+head(CMC)
+```
+
+## FactomineR
+
+### PCA()
+
+```{r}
+pca_1108 = PCA(CMC,ncp=29)
+```
+
+### Variance and cummulative var in the PCA
+
+```{r}
+pca_1108$eig[,2] # variance for each component
+pca_1108$eig[,3] # cummulative variance for each component
+```
+
+### dimdesc()
+
+```{r}
+dimdesc(pca_1108, axes = 1:2) # to get the most correlated variables
+```
+
+## factoextra
+
+### fviz_pca_ind() and fviz_pca_var()
+
+```{r}
+fviz_pca_ind(pca_1108, repel = T)
+fviz_pca_var(pca_1108, repel = T)
+```
+
+### Selecting the individuals and variables based on the quality of representation (cos2) and contributions(contrib)
+
+```{r}
+# Visualizing first
+fviz_cos2(pca_1108, choice = 'ind')
+fviz_cos2(pca_1108, choice = 'var')
+fviz_contrib(pca_1108, choice = 'ind')
+fviz_contrib(pca_1108, choice = 'var')
+# We can also add the top = 
+fviz_cos2(pca_1108, choice = 'ind', top = 10)
+# Now selecting the ind and var based on cos2 and contrib
+fviz_pca_ind(pca_1108, select.ind = list(cos2 = 0.7), repel = T)
+fviz_pca_var(pca_1108, select.var = list(cos2 = 0.7, contrib = 5), repel = T) # plotting the top 5 contributing variables
+```
+
+### biplots
+
+```{r}
+fviz_pca_biplot(pca_1108,
+                repel = T)
+```
+
+### biplots with epsilloids
+
+```{r}
+n = length(CMC[,1])
+g = as.factor(c(rep('A',30),rep('B',20)))
+CMC$g = g
+fviz_pca_biplot(pca_1108, axes = c(1,2),
+                habillage = CMC$g,
+                addEllipses = T,
+                repel = T)
+fviz_pca_biplot(pca_1108, axes = c(1,2),
+                habillage = CMC$g,
+                addEllipses = T,
+                repel = T,
+                select.ind = list(contrib=10))
+```
+

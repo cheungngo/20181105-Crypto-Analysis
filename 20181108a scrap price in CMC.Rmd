@@ -112,7 +112,7 @@ i = 0; j = 0
 CMC_change = CMC[-30,]
 for (j in 1:30) {
   for (i in 1:29) {
-    CMC_change[i,j] = (CMC[i,j]-CMC[i+1,j])/CMC[i+1,j]*100
+    CMC_change[i,j] = (CMC[1,j]-CMC[i+1,j])/CMC[i+1,j]*100
   }
 }
 head(CMC_change)
@@ -124,9 +124,11 @@ head(CMC_change)
 CMC_change_t = data.frame(t(CMC_change))
 cnames = str_c('-',1:29,'day(s)')
 colnames(CMC_change_t) = cnames
+Names = colnames(CMC_change)
+CMC_change_t = cbind(Names,CMC_change_t) # this is done as the rownames would not be saved in the csv files
 head(CMC_change_t)
 ```
 
 ```{r,eval=FALSE}
-write_csv(CMC_change, '20181108-pricechange.csv')
+write_csv(CMC_change_t, '20181108-pricechange.csv')
 ```

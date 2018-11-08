@@ -63,7 +63,7 @@ url_cap = str_c(url1,url_cap,url2)
 head(url_cap)
 ```
 
-### Getting the Price
+### Getting the MC
 
 ```{r}
 CMC = ''
