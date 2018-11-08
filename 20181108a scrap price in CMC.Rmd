@@ -1,0 +1,132 @@
+---
+title: "20181108a scrap price in CMC"
+author: "cheungngo"
+date: "8 November 2018"
+output: word_document
+---
+
+```{r, message=FALSE}
+library(rvest)
+library(tidyverse)
+```
+
+Price is better than market cap as the market cap in the CMC is not so updated?
+
+```{r}
+home = 'https://coinmarketcap.com/'
+url1 = 'https://coinmarketcap.com'
+url2 = 'historical-data/'
+```
+
+### get_text and get_url
+
+```{r}
+get_text = function(url,css) {
+  url %>%
+    read_html() %>%
+    html_nodes(css) %>%
+    html_text()
+}
+```
+
+```{r}
+get_url = function(url,css) {
+  url %>%
+    read_html() %>%
+    html_nodes(css) %>%
+    html_attr('href')
+}
+```
+
+### Getting the names first
+
+```{r}
+crypto = get_text(home,'.currency-name')
+head(crypto)
+crypto = strsplit(crypto,'\n')
+head(crypto)
+i = 0; crypto_name = ''
+for (i in 1:100) {
+  crypto_name[i] = crypto[[i]][3]
+}
+crypto_name = gsub(' ','',crypto_name)
+head(crypto_name)
+```
+
+### Getting the Link for the market cap 
+
+```{r}
+url_cap = ''
+url_cap = get_url(home,'.link-secondary')
+ind = 1:100 * 2
+url_cap = url_cap[ind]
+head(url_cap)
+url_cap = str_c(url1,url_cap,url2)
+head(url_cap)
+```
+
+### Getting the Price
+
+```{r}
+CMC = ''
+for(i in 1:10) {
+  x = get_text(url_cap[i],'td:nth-child(5)')
+  x = gsub(',','',x)
+  x = as.numeric(x)
+  CMC[crypto_name[i]] = data.frame(x)
+}
+for(i in 11:20) {
+  x = get_text(url_cap[i],'td:nth-child(5)')
+  x = gsub(',','',x)
+  x = as.numeric(x)
+  CMC[crypto_name[i]] = data.frame(x)
+}
+for(i in 21:30) {
+  x = get_text(url_cap[i],'td:nth-child(5)')
+  x = gsub(',','',x)
+  x = as.numeric(x)
+  CMC[crypto_name[i]] = data.frame(x)
+}
+for(i in 31:40) {
+  x = get_text(url_cap[i],'td:nth-child(5)')
+  x = gsub(',','',x)
+  x = as.numeric(x)
+  CMC[crypto_name[i]] = data.frame(x)
+}
+for(i in 41:50) {
+  x = get_text(url_cap[i],'td:nth-child(5)')
+  x = gsub(',','',x)
+  x = as.numeric(x)
+  CMC[crypto_name[i]] = data.frame(x)
+}
+CMC = CMC[-1]
+CMC = as.data.frame(CMC)
+head(CMC)
+```
+
+### Change in CMC
+
+```{r}
+dim(CMC)
+i = 0; j = 0
+CMC_change = CMC[-30,]
+for (j in 1:30) {
+  for (i in 1:29) {
+    CMC_change[i,j] = (CMC[i,j]-CMC[i+1,j])/CMC[i+1,j]*100
+  }
+}
+head(CMC_change)
+```
+
+### Tidying up the dataframe
+
+```{r}
+CMC_change_t = data.frame(t(CMC_change))
+cnames = str_c('-',1:29,'day(s)')
+colnames(CMC_change_t) = cnames
+head(CMC_change_t)
+```
+
+```{r,eval=FALSE}
+write_csv(CMC_change, '20181108-pricechange.csv')
+```
