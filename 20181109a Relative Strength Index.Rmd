@@ -1,0 +1,108 @@
+---
+title: "20181109a Relative Strength Index"
+author: "cheungngo"
+date: "9 November 2018"
+output: word_document
+---
+
+### Scraping the data
+
+```{r,message=FALSE}
+library(rvest)
+library(tidyverse)
+```
+
+```{r}
+url = 'https://coinmarketcap.com/currencies/bitcoin/historical-data/?start=20171109&end=20181109'
+```
+
+```{r}
+# function to calculate close
+get_close = function(url) {
+  html = read_html(url)
+  close = html_nodes(html, 'td:nth-child(5)') %>%
+    html_text() 
+  close = gsub(',','',close)
+  options(digits = 9)
+  close = as.numeric(close)
+  return(close)
+}
+```
+
+```{r}
+# getting the 'close' price
+price_close = get_close(url)
+head(price_close)
+class(price_close)
+```
+
+### Calculating the RSI
+
+```{r}
+diff = ''; i = 0
+for (i in 1:(length(price_close)-1)) {
+  diff[i] = price_close[i] - price_close[i+1]
+}
+diff = as.numeric(diff)
+diff_i = ''; RSI = ''
+for (i in 1:(length(price_close)-14)) {
+  diff_i = diff[i:(i+13)]
+  RSI[i] = 100 - 100 / (1 + mean(diff_i[which(diff_i>=0)]) / abs(mean(diff_i[which(diff_i<0)])))
+}
+
+```
+
+#### Or to create a function 
+
+```{r}
+get_RSI = function(price_close, d) {
+  diff = ''; i = 0
+  for (i in 1:(length(price_close)-1)) {
+    diff[i] = price_close[i] - price_close[i+1]
+  }
+  diff = as.numeric(diff)
+  diff_i = ''; RSI = ''
+  for (i in 1:(length(price_close)-d)) {
+    diff_i = diff[i:(i+d)]
+    RSI[i] = 100 - 100 / (1 + mean(diff_i[which(diff_i>=0)]) /   abs(mean(diff_i[which(diff_i<0)])))
+  }
+  return(RSI)
+}
+```
+
+```{r}
+RSI = get_RSI(price_close, 14)
+head(RSI)
+```
+
+
+### Creating an array of dates
+
+```{r}
+# function to get the first and last date
+get_date = function(url) {
+  html = read_html(url)
+  latest = html_nodes(html, '.text-right:nth-child(1) .text-left') %>%
+    html_text()
+  earliest = html_nodes(html, '.text-right:nth-child(365) .text-left') %>%
+    html_text()
+  return(c(latest, earliest))
+}
+```
+
+```{r}
+get_date(url)
+```
+
+```{r}
+latest = as.Date('2018-11-08')
+earlist = as.Date('2017-11-08') # note that this would be deferred by one day
+dates = seq.Date(from = earlist, to = latest, by = 'day')
+head(dates)
+```
+
+
+```{r}
+get_date(url)
+```
+
