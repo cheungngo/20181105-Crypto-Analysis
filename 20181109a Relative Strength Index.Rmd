@@ -36,6 +36,7 @@ head(price_close)
 class(price_close)
 ```
 
+
 ### Calculating the RSI
 
 ```{r}
@@ -64,7 +65,8 @@ get_RSI = function(price_close, d) {
   diff_i = ''; RSI = ''
   for (i in 1:(length(price_close)-d)) {
     diff_i = diff[i:(i+d)]
-    RSI[i] = 100 - 100 / (1 + mean(diff_i[which(diff_i>=0)]) /   abs(mean(diff_i[which(diff_i<0)])))
+    RSI[i] = 100 - 100 / (1 + mean(diff_i[which(diff_i>=0)]) /   mean(abs(diff_i[which(diff_i<0)])))
+    RSI[i] = as.numeric(RSI[i])
   }
   return(RSI)
 }
@@ -72,7 +74,9 @@ get_RSI = function(price_close, d) {
 
 ```{r}
 RSI = get_RSI(price_close, 14)
-head(RSI)
+RSI = sapply(RSI,as.numeric)
+RSI = as.vector(RSI)
+class(RSI)
 ```
 
 
@@ -102,7 +106,91 @@ head(dates)
 ```
 
 
+### Combining the data
+
 ```{r}
-get_date(url)
+RSI_r = rev(RSI)
+length(dates) - length(RSI)
+date_trim = dates[-(1:15)]
+index = 1:length(RSI)
+length(price_close) - length(RSI)
+price_close_r = rev(price_close)
+price_trim = price_close_r[-(1:14)]
+final = data.frame(Index = index,
+                   Date = date_trim,
+                   Price = price_trim,
+                   RSI = RSI_r)
+head(final)
+```
+
+
+### Plotting
+
+```{r}
+par(mfrow = c(2,1))
+plot(final$Price~final$Date,
+     type ='l',
+     ylab = 'Price',
+     xlab = 'Time')
+plot(final$RSI~final$Date,
+     type = 'l',
+     col = 'red',
+     ylab = 'RSI',
+     xlab = 'Time')
+```
+
+
+### Further analysis of the RSI
+
+The plotting is not important in our analysis as tradingview or other apps are able to do it much better.
+
+```{r}
+# Setting the time frame
+ind_1 = length(final$Index)
+ind_28 = ind_1 - 27
+ind_56 = ind_1 - 55
+ind_84 = ind_1 - 83
+```
+
+```{r}
+# Subsetting the data
+final_28 = final[ind_28:ind_1,]
+final_56 = final[ind_56:ind_1,]
+final_84 = final[ind_84:ind_1,]
+```
+
+```{r}
+# Linear regression
+lm_28 = lm(final_28$RSI~final_28$Index)
+lm_56 = lm(final_56$RSI~final_56$Index)
+lm_84 = lm(final_84$RSI~final_84$Index)
+coef(lm_28)[2]
+coef(lm_56)[2]
+coef(lm_84)[2]
+```
+
+```{r}
+# Note that the coef * 28 will be equal to the change in RSI in month
+coef(lm_28)[2] * 28
+```
+
+
+#### Or we can do a program for it
+
+```{r}
+# Note that the dataframe 'final' should contain columns of 'RSI' and 'Index'
+get_RSI_coef = function(final, day) {
+  ind_1 = length(final$Index)
+  ind_day = ind_1 - day + 1
+  final_day = final[ind_day:ind_1,]
+  lm_day = lm(final_day$RSI~final_day$Index)
+  return(coef(lm_day)[2])
+}
+```
+
+```{r}
+get_RSI_coef(final, 28)
+get_RSI_coef(final, 56)
+get_RSI_coef(final, 84)
 ```
 
