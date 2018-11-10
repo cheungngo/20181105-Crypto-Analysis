@@ -1,0 +1,103 @@
+---
+title: "20181110a kmeans for price change"
+author: "cheungngo"
+date: "10 November 2018"
+output: word_document
+---
+
+
+### Loading the data
+
+```{r}
+# We got the data of price change from the '20181108a scrap price in CMC'
+library(readr)
+X20181110_pricechange <- read_csv("20181110-pricechange.csv")
+View(X20181110_pricechange)
+CMC1110 = X20181110_pricechange
+# Reorganizing the dataframe
+names = sapply(CMC1110[,1], as.character)
+class(CMC1110)
+CMC1110 = as.data.frame(CMC1110)
+rownames(CMC1110) = names
+CMC1110 = CMC1110[,-1]
+head(CMC1110)
+```
+
+
+### Number of clusters required
+
+```{r}
+wss = ''
+for(i in 1:15) {
+  km.CMC = kmeans(CMC1110, centers = i, nstart = 20, iter.max = 50)
+  wss[i] = km.CMC$tot.withinss
+}
+plot(1:15, wss, type='b',
+     xlab = 'centers', ylab = 'wss')
+# Seems the elbow point is at 3
+```
+
+```{r}
+wss = as.numeric(wss)
+angle_change = ''
+for(i in 2:15) {
+  angle_change[i] = atan(10000/(wss[i]-wss[i+1])) - atan(10000/(wss[i-1]-wss[i]))
+}
+# Note that it should be 10000 instead of 1 (look at the scale)
+angle_change
+which.max(angle_change)
+```
+
+
+### kmeans with 3 clusters
+
+```{r}
+km_price_change = kmeans(CMC1110, centers = 3, nstart = 20, iter.max = 50)
+summary(km_price_change)
+```
+
+
+### visualizing the clustering
+
+```{r}
+km_price_change$cluster
+table(km_price_change$cluster)
+CMC1110$Cluster = km_price_change$cluster
+dim(CMC1110)
+```
+
+
+### Trying to visualize the data after PCA
+
+```{r,message=FALSE}
+library(FactoMineR)
+library(factoextra)
+```
+
+```{r}
+pca_1110 = PCA(CMC1110[,-30],ncp=5,graph=F)
+fviz_pca_biplot(pca_1110, axes = c(1,2),
+                col.ind = as.factor(CMC1110$Cluster),
+                col.var = 'grey',
+                repel = T)
+```
+
+
+### Finding the outliers
+
+```{r}
+# We now know group 1 would be the ones with outlying -ve price changes,
+# while group 3 the positives
+rownames(CMC1110[which(CMC1110$Cluster==1),])
+rownames(CMC1110[which(CMC1110$Cluster==3),])
+```
+
+
+### Saving the data
+
+```{r}
+final = data.frame(Name = rownames(CMC1110),
+                   Cluster = CMC1110$Cluster)
+write_csv(final, '20181110-Cluster.csv')
+```
+
